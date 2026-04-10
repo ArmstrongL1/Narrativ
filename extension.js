@@ -1,10 +1,11 @@
 const vscode = require('vscode');
 const cp = require('child_process');
+let speakTimeout;
 
 function speak(text) {
 	const platform = process.platform;
 	if (platform === 'darwin') {
-		cp.spawn('python3', ['-c', `import pyttsx3; e=pyttsx3.init('nsss'); e.say("${text}"); e.runAndWait()`]);
+		cp.spawn('say', [text]);
 	} else if (platform === 'win32') {
 		cp.spawn('python', ['-c', `import pyttsx3; e=pyttsx3.init('sapi5'); e.say("${text}"); e.runAndWait()`]);
 	} else {
@@ -47,7 +48,8 @@ function simplifyLine(line) {
 function activate(context) {
 	vscode.window.showInformationMessage('Narrativ activated: Speak code lines on cursor move.');
 
-	const result = cp.spawnSync('python', ['--version']);
+	const result = cp.spawnSync('python3', ['--version'], { encoding: 'utf8' });
+
 	vscode.window.showInformationMessage('Python: ' + result.stdout.toString() + result.stderr.toString());
 
 	let lastLine = -1;
@@ -74,7 +76,8 @@ function activate(context) {
 			message = simplified;
 		}
 
-		speak(message);
+		clearTimeout(speakTimeout);
+		speakTimeout = setTimeout(() => speak(message), 300);
 	});
 
 	context.subscriptions.push(disposable);
